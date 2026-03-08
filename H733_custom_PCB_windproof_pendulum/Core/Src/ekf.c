@@ -14,8 +14,8 @@ void EKF_Init(EKF_Handle_t *ekf, uint16_t n, uint16_t m, uint16_t u_dim) {
     ekf->n = n;
     ekf->m = m;
     ekf->u_dim = u_dim;
-    // Note: The actual data pointers for ekf->x.pData, ekf->P.pData, etc.,
-    // must be assigned in your pendulum_model.c before calling this.
+    // The actual data pointers for ekf->x.pData, ekf->P.pData, etc.,
+    // must be assigned in pendulum_model.c before calling this.
 }
 
 /**
