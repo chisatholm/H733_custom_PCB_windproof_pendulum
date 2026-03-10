@@ -141,20 +141,20 @@ int main(void)
 
   test_status = 0; // (ARM_MATH_SUCCESS)
 
-  //PENDULUM_Model_Init();
-  //SENSOR_Init();
-  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-  //HAL_TIM_Base_Start_IT(&htim2);
-  //HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_4);
-  //HAL_TIM_Base_Start(&htim5);
+  PENDULUM_Model_Init();
+  SENSOR_Init();
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+  HAL_TIM_Base_Start_IT(&htim2);
+  HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_4);
+  HAL_TIM_Base_Start(&htim5);
 
-  while (1){
+  /*while (1){
   wave_value = sinf((float)count / 100.0);
   count ++;
   HAL_Delay(10);
-  }
+  }*/
 
   /* USER CODE END 2 */
 
