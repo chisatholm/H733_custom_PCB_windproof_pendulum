@@ -12,12 +12,24 @@
 	#include "arm_math.h"
 	#include "ekf.h"
 
-	/* --- Physics Constants --- */
-	static const float64_t PEND_ZETA 	= 0.1;     // Damping coefficient, dimensionless
-	static const float64_t PEND_DT 		= 0.002;   // 500Hz Sample Rate
-	static const float64_t PEND_I  		= 1.0; 	   // Moment of inertia, kg.m^2
-	static const float64_t PEND_MGL		= 1.0;     // kg.m^2.s^-2: pendulum mass x gravitational accel x distance of CofG below pivot
-	// MGL seems like an odd measure to use, but it is the torque per radian displacement from centre, so it is actually convenient
+	/* --- Directly Measured Physics Constants 	--- */
+	static const float64_t PEND_MGL				= (0.178 * 9.81 * 0.13); // Nm, measured torque required to hold pendulum at 90 deg to vertical
+	static const float64_t PEND_PERIOD			= 1.28; // seconds
+
+	/* --- Inferred Physics Constants 			--- */
+	static const float64_t PEND_ZETA 			= 0.1; // Damping coefficient, dimensionless [to be evaluated empirically]
+
+	/* --- Calculated Physics Constants 		--- */
+	static const float64_t PEND_I  				= (PEND_MGL * PEND_PERIOD * PEND_PERIOD) / (4.0 * M_PI * M_PI); // Moment of inertia, kg.m^2
+
+	/* --- Engineering Decisions 				--- */
+	static const float64_t PEND_DT 				= 0.002; // 500Hz Sample Rate
+
+	/* --- Sensor Calibration 					--- */
+	#define AS5048A_ZERO_OFFSET    14692    // Raw value representing 0 radians
+	#define AS5048A_RANGE          16384    // 14-bit resolution
+	#define AS5048A_DIRECTION      1.0f     // 1.0 for CCW positive, -1.0 for CW positive
+	#define BMI270_DIRECTION      -1.0f     // Negate to align with Right-Hand Rule
 
 	/* --- EKF Dimension Definitions --- */
 	#define PEND_STATE_DIM    3    // [theta, omega, wind_bias]

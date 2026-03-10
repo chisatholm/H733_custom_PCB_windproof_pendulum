@@ -10,10 +10,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "tim.h"
+#include "pendulum.h"
 
 typedef struct {
     float angle_rad;
-    uint16_t raw_encoder;
+    int32_t raw_encoder;
 
     float gyro_z_rps;
     float accel_x_mps2;

@@ -48,6 +48,7 @@ static SensorData_t validated_data;
 uint8_t error_reg = 234;
 extern uint8_t debug_array[3];
 uint8_t ID_returned = 0;
+static uint32_t last_ready_time = 0;
 
 uint8_t toggle_count = 0;
 
@@ -116,7 +117,7 @@ void SENSOR_StartAcquisition(void) {
     HAL_SPI_TransmitReceive_DMA(&AS5048A_SPI, (uint8_t*)&enc_tx_cmd, (uint8_t*)&enc_rx_raw, 2);
 
     HAL_GPIO_WritePin(BMI270_CSn_GPIO_Port, BMI270_CSn_Pin, GPIO_PIN_RESET);
-    HAL_SPI_TransmitReceive_DMA(&BMI270_SPI, imu_tx_buf, (uint8_t*)imu_rx_raw, 14);
+    HAL_SPI_TransmitReceive_DMA(&BMI270_SPI, imu_tx_buf, (uint8_t*)imu_rx_raw, 14); // TODO this acquires more data than used, there are maybe 40us available to be saved
 }
 
 /**
@@ -139,10 +140,12 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void SENSOR_OnDataReady(void) {
-    // 1. Capture timestamp IMMEDIATELY when the callback fires
+    // 0. Capture timestamp IMMEDIATELY when the callback fires
     // The timestamp reflects the
     // moment the DMA finished.
-    uint32_t current_time = __HAL_TIM_GET_COUNTER(&htim2);
+    uint32_t current_time = __HAL_TIM_GET_COUNTER(&htim5);
+    uint32_t delta_us = current_time - last_ready_time;
+    last_ready_time = current_time;
 
     // 1. A. Tell CPU to refresh DMA data.
     SCB_InvalidateDCache_by_Addr((uint32_t*)imu_rx_raw, 14);
@@ -172,10 +175,21 @@ void SENSOR_OnDataReady(void) {
     }
 
     if (parity_ok && !error_bit) {
-        live_data.raw_encoder = enc_rx_raw[0] & 0x3FFF;
-        live_data.angle_rad = (float)live_data.raw_encoder * (2.0f * 3.14159265f / 16384.0f);
-        live_data.encoder_valid = true;
-    } else {
+
+	// 1. Apply Offset
+	int32_t raw_centered = (int32_t)(enc_rx_raw[0] & 0x3FFF) - AS5048A_ZERO_OFFSET;
+
+	// 2.A. Handle Rollover (Wrapping to [-8192, 8191])
+	if (raw_centered > (AS5048A_RANGE / 2)) raw_centered -= AS5048A_RANGE;
+	if (raw_centered < -(AS5048A_RANGE / 2)) raw_centered += AS5048A_RANGE;
+
+	// 2.B. Convert to Radians
+	live_data.raw_encoder = raw_centered;
+	live_data.angle_rad = (float)live_data.raw_encoder * (2.0f * 3.14159265f / (AS5048A_RANGE * AS5048A_DIRECTION));
+	live_data.encoder_valid = true;
+    }
+
+    else {
         live_data.encoder_valid = false;
         // Keep the previous angle_rad to avoid jumping to 0.0
     }
@@ -185,11 +199,11 @@ void SENSOR_OnDataReady(void) {
     int16_t raw_gz = (int16_t)((imu_rx_raw[13] << 8) | imu_rx_raw[12]);
 
     live_data.accel_x_mps2 = (float)raw_ax * (GRAVITY_MSS / BMI270_ACCEL_2G_LSB);
-    live_data.gyro_z_rps   = (float)raw_gz * ((3.14159f / 180.0f) / 262.4f);
+    live_data.gyro_z_rps   = (float)raw_gz * ((3.14159f / 180.0f) / 131.2f) * BMI270_DIRECTION;
     live_data.imu_valid    = true; // Add specific BMI270 error checks if needed
 
     // 4. Update and Snapshot
-    live_data.timestamp_us = current_time;
+    live_data.timestamp_us = delta_us;
 
     // Only copy if at least one sensor is healthy
     if (live_data.encoder_valid || live_data.imu_valid) {
@@ -283,7 +297,7 @@ void BMI270_Init(void) {
 
     // 10.b. GYR_CONF
     reg_addr = BMI270_REG_GYR_RANGE;
-    tx_val = 0x04;
+    tx_val = 0x03; // 0x03 = +/-250 degrees/second (131.2 LSB/dps), 0x04 = +/-125 dps (262.4 LSB/dps)
     BMI270_Write_Reg(reg_addr, tx_val);
     HAL_Delay(10);
 

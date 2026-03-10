@@ -40,7 +40,7 @@ typedef struct {
     void (*jacob_H)(arm_matrix_instance_f64 *H_out, const arm_matrix_instance_f64 *x_in);
 
     /* * --- Internal Scratchpad Buffers ---
-     * These are pointers to memory used in pendulum_model.c
+     * These are pointers to memory used in pendulum.c
      * to avoid using malloc() during real-time execution.
      */
     arm_matrix_instance_f64 F;      // State transition Jacobian [n x n]

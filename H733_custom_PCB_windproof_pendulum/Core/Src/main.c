@@ -32,6 +32,7 @@
 #include "diagnostics.h"
 #include "sensor_manager.h"
 #include "matrix_f64.h"
+#include "pendulum_model.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,9 +53,12 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+float wave_value = 0;
+uint32_t count = 0;
 uint8_t debug_array[3];
 volatile bool init_success = false;
 extern arm_status test_status;
+int debug_number = 2;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -115,9 +119,10 @@ int main(void)
   MX_SPI4_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_8, SET);
-  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, SET);
+  HAL_GPIO_WritePin(MP6540H_EN_GPIO_Port, MP6540H_EN_Pin, RESET); // MP6054H enable active high
+  HAL_GPIO_WritePin(MP6540H_SLEEPn_GPIO_Port, MP6540H_SLEEPn_Pin, RESET); // MP6054H sleep active (ie sleep) low
 
   // Example 1: Test Matrix Multiplication
   test_mat_mult_f64();    // C = A * B
@@ -136,13 +141,20 @@ int main(void)
 
   test_status = 0; // (ARM_MATH_SUCCESS)
 
+  //PENDULUM_Model_Init();
+  //SENSOR_Init();
+  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  //HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+  //HAL_TIM_Base_Start_IT(&htim2);
+  //HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_4);
+  //HAL_TIM_Base_Start(&htim5);
 
-  SENSOR_Init();
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-  HAL_TIM_Base_Start_IT(&htim2);
-  HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_4);
+  while (1){
+  wave_value = sinf((float)count / 100.0);
+  count ++;
+  HAL_Delay(10);
+  }
 
   /* USER CODE END 2 */
 
