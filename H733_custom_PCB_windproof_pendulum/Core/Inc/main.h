@@ -58,14 +58,8 @@ void Error_Handler(void);
 
 /* Private defines -----------------------------------------------------------*/
 #define AC_USER_CONSTANT 69.0
-#define BMI270_SCK_Pin GPIO_PIN_2
-#define BMI270_SCK_GPIO_Port GPIOE
 #define BMI270_CSn_Pin GPIO_PIN_3
 #define BMI270_CSn_GPIO_Port GPIOE
-#define BMI270_MISO_Pin GPIO_PIN_5
-#define BMI270_MISO_GPIO_Port GPIOE
-#define BMI270_MOSI_Pin GPIO_PIN_6
-#define BMI270_MOSI_GPIO_Port GPIOE
 #define SOA_Pin GPIO_PIN_0
 #define SOA_GPIO_Port GPIOC
 #define SOB_Pin GPIO_PIN_2
